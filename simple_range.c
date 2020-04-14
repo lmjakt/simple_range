@@ -1,6 +1,15 @@
 #include <R.h>
 #include <Rinternals.h>
 
+// 1 : not sorted
+// 0 : sorted
+int is_unsorted(double *v, size_t l){
+  for(size_t i=1; i < l; ++i){
+    if( v[i] < v[i-1] )
+      return(1);
+  }
+  return(0);
+}
 
 // a and b are matrices containing beg and end coordinates
 // The begin part of a must be sorted from beginning to end 
@@ -16,8 +25,8 @@ SEXP range_overlap(SEXP a_r, SEXP b_r){
   if(!isReal(a_r) || !isReal(b_r))
     error("Both arguments should be real vectors");
   
-  SEXP a_dim_r = getAttrib(a_r, R_DimSymbol);
-  SEXP b_dim_r = getAttrib(b_r, R_DimSymbol);
+  SEXP a_dim_r = PROTECT(getAttrib(a_r, R_DimSymbol));
+  SEXP b_dim_r = PROTECT(getAttrib(b_r, R_DimSymbol));
   if( length(a_dim_r) != 2 || length(b_dim_r) != 2 )
     error("Both arguments should be matrices");
 
@@ -31,7 +40,13 @@ SEXP range_overlap(SEXP a_r, SEXP b_r){
   double *b_end = b_beg + b_dim[0];
 
   // There is an R function to determine whether an R object is sorted,
-  // But I do not know what that means;
+  // But I have not found the documentation for it;
+  // so using my own above:
+  // do I need to UNPROTECT here?
+  if( is_unsorted( a_beg, a_dim[0] ) ||
+      is_unsorted( b_beg, b_dim[0] ) )
+    error("Range begins must be sorted");
+  
 
   // the indices
   int a_i = 0;
@@ -72,6 +87,6 @@ SEXP range_overlap(SEXP a_r, SEXP b_r){
     if( b_end[b_i] < a_beg[a_i] )
       ++b_i;
   }
-  UNPROTECT(3);
+  UNPROTECT(5);
   return( overlaps_r );
 }
