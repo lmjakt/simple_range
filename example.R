@@ -26,3 +26,29 @@ olaps <- .Call('range_overlap', cbind(beg.a, end.a), cbind(beg.b, end.b))
 
 ## and this gives us an error; 
 olaps.2 <- .Call('range_overlap', cbind(beg.a, end.a), cbind(beg.c, end.c))
+
+
+## to arrange lines so that they do not overlap:
+dyn.load("arrange_lines.so")
+
+pos <- read.table('align_pos.txt', sep="\t", stringsAsFactors=FALSE )
+
+system.time(
+    y <- .Call( "arrange_lines", as.double(pos[,'x1']), as.double(pos[,'x2']) )
+)
+##  user  system elapsed 
+## 0.536   0.000   0.537 
+
+## a bit horribly slow for 12,083 rows (works faster on my machine. Might
+## be good to compile with
+## MAKEFLAGS="CFLAGS=-O3" R CMD SHLIB arrange_lines.c
+
+dyn.load("arrange_lines.so")
+
+system.time(
+    y <- .Call( "arrange_lines", as.double(pos[,'x1']), as.double(pos[,'x2']) )
+)
+##  user  system elapsed 
+## 0.308   0.000   0.309 
+
+## not that much better, but it's working.
