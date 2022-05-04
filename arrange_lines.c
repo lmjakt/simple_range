@@ -39,6 +39,8 @@ SEXP arrange_lines(SEXP r_x1, SEXP r_x2){
 	y[i] = j;
 	break;
       }
+      // if no empty slot found, set to position to i
+      y[i] = (y[i] == 0) ? i : y[i];
     }
     bzero((void*)forbidden_y, n);
   }

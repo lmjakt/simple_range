@@ -27,8 +27,10 @@ SEXP range_overlap(SEXP a_r, SEXP b_r){
   
   SEXP a_dim_r = PROTECT(getAttrib(a_r, R_DimSymbol));
   SEXP b_dim_r = PROTECT(getAttrib(b_r, R_DimSymbol));
-  if( length(a_dim_r) != 2 || length(b_dim_r) != 2 )
+  if( length(a_dim_r) != 2 || length(b_dim_r) != 2 ){
+    UNPROTECT(2);
     error("Both arguments should be matrices");
+  }
 
   int *a_dim = INTEGER(a_dim_r);
   int *b_dim = INTEGER(b_dim_r);
@@ -89,4 +91,69 @@ SEXP range_overlap(SEXP a_r, SEXP b_r){
   }
   UNPROTECT(5);
   return( overlaps_r );
+}
+
+// Returns the indices of the first range where end >= pos
+// and the last range where beg <= pos
+// as as matrix with n columns and 2 rows
+// Note that a single index will be returned for each point
+// even if it falls within several overlapping ranges.
+// The following must all be TRUE
+// ranges_r: a 2 column matrix giving the begin and end coordinates
+//           of ranges.
+//           end > begin
+// ranges_r must be sorted and should only have unique coordinates (i.e.
+// cannot have coordinates from several chromosomes unless these have been
+// adjusted by adding cumulative offsets to each chromosome (but don't do this
+// unless you have a really good reason for doing it.
+// points_r: a sorted range of points
+// All values must be 64 bit REALs.
+// DOES NOT DO THE LOGICAL THING WITH OVERLAPPING RANGES; REPORTS ONLY THE FIRST ONE!
+SEXP points_in_ranges(SEXP ranges_r, SEXP points_r){
+  if(!isReal(ranges_r) || !isReal(points_r))
+    error("Both arguments should be real vectors");
+  
+  SEXP ranges_dim_r = PROTECT(getAttrib(ranges_r, R_DimSymbol));
+  if( length(ranges_dim_r) != 2 ){
+    UNPROTECT(1);
+    error("ranges_r should be a matrix");
+  }
+  int *ranges_dim = INTEGER(ranges_dim_r);
+  if(ranges_dim[0] < 1 || ranges_dim[1] != 2){
+    UNPROTECT(1);
+    error("ranges_r should be a matrix with 2 columns and at least one row");
+  }
+  int point_n = length(points_r);
+  if(point_n < 1){
+    UNPROTECT(1);
+    error("you should specify at least one point");
+  }
+  double *r_beg = REAL(ranges_r);
+  double *r_end = r_beg + ranges_dim[0];
+  double *points = REAL(points_r);
+  
+  if( is_unsorted(r_beg, ranges_dim[0]) || is_unsorted(points, point_n) ){
+    UNPROTECT(1);
+    error("both the ranges and the points must be sorted");
+  }
+
+  SEXP point_i_r = PROTECT(allocMatrix(INTSXP, point_n, 2));
+  int *point_b = INTEGER(point_i_r);
+  int *point_e = point_b + point_n;
+
+  int j = 0;  // the range index
+  for(int i=0; i < point_n; ++i){
+    while(j < ranges_dim[0] && r_end[j] < points[i])
+      ++j;
+
+    point_e[i] = j+1;
+    int k = j;
+    while(k > 0 && r_beg[k] > points[i])
+      --k;
+
+    point_b[i] = r_beg[k] < points[i] ? k+1 : k;
+    j = k;
+  }
+  UNPROTECT(2);
+  return(point_i_r);
 }
