@@ -15,3 +15,4 @@ plot.window(xlim=c(1,11000), ylim=c(0,10))
 rect(ranges[,1], 1, ranges[,2], 3 )
 abline( v=points )
 
+abline( v=points[ points.i[,1] == points.i[,2] & points.i[,1] <= length(points) ], col='red' )
