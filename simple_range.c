@@ -15,7 +15,7 @@ int is_unsorted(double *v, size_t l){
 
 // a and b are matrices containing beg and end coordinates
 // The begin part of a must be sorted from beginning to end 
-// This determines which elements of a
+// This function determines which elements of a:
 // overlap with elements in b
 // are contained by elements in b
 // contain elements in b
@@ -88,7 +88,10 @@ SEXP range_overlap(SEXP a_r, SEXP b_r){
       }
     }
     ++a_i;
-    if( b_end[b_i] < a_beg[a_i] )
+    // This used to be a single if statement giving no more than a single
+    // increment of b_i for each iteration of a_i. That seems wasteful, especially when
+    // a is sparse compared t b. Change to a while loop
+    while( b_end[b_i] < a_beg[a_i] && b_i < b_dim[0] )
       ++b_i;
   }
   UNPROTECT(5);
