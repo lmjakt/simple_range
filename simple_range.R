@@ -14,6 +14,13 @@ rangesOverlap <- function(a, b){
     .Call( "range_overlap", a, b )
 }
 
+## Returns the indices of:
+## b: the last range where beg <= pos
+## e: the first range where end >= pos
+## for each position pos in in points
+## Note: this will only report the first of a set of overlapping ranges
+## that all contain the point.
+## both points and ranges (by beg) must be sorted in ascending order.
 pointsInRanges <- function( ranges, points ){
     if(!is.numeric(ranges) || !is.numeric(points))
         stop("both arguments must be numeric matrices");
@@ -21,7 +28,9 @@ pointsInRanges <- function( ranges, points ){
         ranges <- matrix(as.double(ranges), nrow=nrow(ranges), ncol=ncol(ranges))
     if(!is.double(points))
         points <- as.double(points)
-    .Call( "points_in_ranges", ranges, points )
+    tmp <- .Call( "points_in_ranges", ranges, points )
+    colnames(tmp) <- c("b", "e")
+    tmp
 }
 
 ## x should be a matrix with two columns

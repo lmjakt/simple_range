@@ -5,8 +5,10 @@
 // 0 : sorted
 int is_unsorted(double *v, size_t l){
   for(size_t i=1; i < l; ++i){
-    if( v[i] < v[i-1] )
+    if( v[i] < v[i-1] ){
+      Rprintf("%f < %f at position %d and %d\n", v[i], v[i-1], i, i+1);
       return(1);
+    }
   }
   return(0);
 }
@@ -131,7 +133,7 @@ SEXP points_in_ranges(SEXP ranges_r, SEXP points_r){
   double *r_beg = REAL(ranges_r);
   double *r_end = r_beg + ranges_dim[0];
   double *points = REAL(points_r);
-  
+
   if( is_unsorted(r_beg, ranges_dim[0]) || is_unsorted(points, point_n) ){
     UNPROTECT(1);
     error("both the ranges and the points must be sorted");
